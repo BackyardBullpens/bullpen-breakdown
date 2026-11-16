@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bullpen Breakdown</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f4f7; --card:#fff; --ink:#141824; --muted:#6b7285; --line:#e6e8ee;
+  --accent:#ff9f0a; --accent-ink:#8a4b00; --pass:#22924f; --flag:#e0484d; --info:#3b6fd8;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+header{padding:22px 18px 6px;max-width:780px;margin:0 auto}
+header h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
+header h1 span{color:var(--accent)}
+header p{margin:4px 0 0;color:var(--muted);font-size:14px}
+main{max-width:780px;margin:0 auto;padding:10px 14px 60px}
+.card{background:var(--card);border-radius:var(--radius);padding:18px;margin:12px 0;box-shadow:0 1px 2px rgba(20,24,36,.04),0 6px 24px rgba(20,24,36,.05)}
+h2{font-size:17px;margin:0 0 12px;font-weight:700;letter-spacing:-.01em}
+h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px;font-weight:700}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
+input[type=text],input[type=number],select{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.row{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.row3{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
+.field{margin-bottom:12px}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px}
+.seg button{flex:1;border:0;background:transparent;font:inherit;font-weight:600;padding:9px;border-radius:10px;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;font:inherit;font-weight:700;padding:13px 18px;border-radius:14px;background:var(--accent);color:#fff;cursor:pointer;width:100%}
+.btn:disabled{opacity:.45}
+.btn.ghost{background:var(--bg);color:var(--ink)}
+.btn.small{width:auto;padding:9px 13px;font-size:13px;border-radius:11px}
+.file{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;border:2px dashed #d5d8e1;border-radius:16px;padding:22px;text-align:center;color:var(--muted);font-weight:600;cursor:pointer}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file b{color:var(--ink);font-size:16px}
+.hint{font-size:13px;color:var(--muted)}
+.progress{height:8px;background:var(--bg);border-radius:8px;overflow:hidden;margin-top:12px}
+.progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+#status{margin-top:10px;font-size:14px;font-weight:600}
+.err{background:#fff3f3;color:#9b1c20;border-radius:12px;padding:12px 14px;font-size:14px;margin-top:12px}
+.vwrap{position:relative;border-radius:14px;overflow:hidden;background:#000}
+.vwrap video{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain;background:#000}
+.vwrap canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.evbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.evbar button{flex:1;min-width:90px;border:0;background:var(--bg);font:inherit;font-size:13px;font-weight:700;padding:10px 8px;border-radius:11px;color:var(--ink)}
+.evbar button small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.evbar button.slow{background:var(--ink);color:#fff}
+.evbar button.on{box-shadow:inset 0 0 0 2px var(--accent);background:#fff7ea}
+.nudge{margin-top:10px;background:var(--bg);border-radius:14px;padding:10px}
+.nudge .nl{font-size:13px;font-weight:700;margin:0 0 8px;text-align:center}
+.nudge .nb{display:flex;gap:8px}
+.nudge button{flex:1;border:0;background:#fff;font:inherit;font-size:13px;font-weight:700;padding:11px 6px;border-radius:11px;color:var(--ink)}
+.nudge button.set{background:var(--accent);color:#fff;flex:1.4}
+.nudge button.ghostline{background:transparent;color:var(--muted);font-weight:600}
+.summary{display:flex;align-items:center;gap:16px}
+.ring{--p:0;width:86px;height:86px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--bg) 0);display:grid;place-items:center;flex:none}
+.ring div{width:68px;height:68px;border-radius:50%;background:#fff;display:grid;place-items:center;font-weight:800;font-size:20px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px}
+.badge.pass{background:#e6f5ec;color:var(--pass)} .badge.flag{background:#fdeceb;color:var(--flag)} .badge.info{background:#e9effb;color:var(--info)} .badge.warn{background:#fff3df;color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.grid{grid-template-columns:1fr}}
+.check{border:1.5px solid var(--line);border-radius:14px;padding:13px 14px}
+.check .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.check .name{font-weight:700}
+.check .val{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px}
+.check .what{font-size:12px;color:var(--muted)}
+.check .cue{font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.check.flagged{border-color:#f4c4c5;background:#fffafa}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:12px}
+tr.sel td{background:#fff7ea}
+tbody tr{cursor:pointer}
+.scroll{overflow-x:auto}
+.agg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.agg .a{border:1.5px solid var(--line);border-radius:14px;padding:12px}
+.agg .a .n{font-size:24px;font-weight:800}
+.agg .a .n small{font-size:14px;font-weight:600;color:var(--muted)}
+.agg .a.bad{border-color:#f4c4c5}
+details summary{cursor:pointer;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary:after{content:"＋";float:right;color:var(--muted)}
+details[open] summary:after{content:"－"}
+ul.tips{padding-left:18px;margin:10px 0 0} ul.tips li{margin:6px 0;font-size:14px}
+.thr{display:grid;grid-template-columns:1fr 92px;gap:8px 12px;align-items:center;margin-top:12px;font-size:14px}
+.thr input{padding:8px 10px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bullpen <span>Breakdown</span></h1>
+  <p>2D pitching mechanics from one side-view video. Upload one pitch per clip. <span style="color:var(--accent-ink);font-weight:700">v2</span></p>
+</header>
+<main>
+
+<section class="card" id="setup">
+  <h2>New pitch</h2>
+  <div class="field"><label>Athlete</label><input type="text" id="athlete" placeholder="Name"></div>
+  <div class="row">
+    <div class="field"><label>Height</label>
+      <div class="row" style="gap:8px">
+        <select id="ft"><option>4</option><option>5</option><option selected>6</option><option>7</option></select>
+        <select id="inch"></select>
+      </div>
+    </div>
+    <div class="field"><label>Throws</label>
+      <div class="seg" id="throws"><button data-v="R" class="on">Right</button><button data-v="L">Left</button></div>
+    </div>
+  </div>
+  <div class="field"><label>Clip speed</label>
+    <select id="slow">
+      <option value="1">Real time (normal or 60/120/240 fps file)</option>
+      <option value="4">Slowed down 4×</option>
+      <option value="8">Slowed down 8×</option>
+    </select>
+  </div>
+  <label class="file" id="drop">
+    <input type="file" id="file" accept="video/*">
+    <b id="fileName">Choose bullpen video</b>
+    <span class="hint">Side view · whole body · one pitch</span>
+  </label>
+  <div id="trimBox" class="hidden" style="margin-top:12px">
+    <div class="row">
+      <div><label>Analyze from (sec)</label><input type="number" id="tStart" step="0.1" min="0" inputmode="decimal"></div>
+      <div><label>to (sec)</label><input type="number" id="tEnd" step="0.1" min="0" inputmode="decimal"></div>
+    </div>
+    <p class="hint" style="margin:8px 0 0">Trim to just the delivery: from first move to the finish (about 2–3 seconds). Shorter = faster and more accurate.</p>
+  </div>
+  <div style="margin-top:14px" class="actions">
+    <button class="btn" id="go" disabled>Analyze pitch</button>
+    <button class="btn ghost hidden" id="cancel">Cancel</button>
+  </div>
+  <div class="progress hidden" id="prog"><i></i></div>
+  <div id="status"></div>
+  <div id="err" class="err hidden"></div>
+  <div id="modelPick" class="hidden" style="margin-top:12px">
+    <label class="file"><input type="file" id="modelFile" accept=".task,application/octet-stream"><b>Load pose model file (.task)</b><span class="hint">pose_landmarker_full.task</span></label>
+  </div>
+</section>
+
+<section class="card hidden" id="viewer">
+  <div class="vwrap"><video id="video" playsinline muted preload="auto"></video><canvas id="overlay"></canvas></div>
+  <div class="evbar" id="evbar">
+    <button data-ev="pkh">Leg lift<small id="evPkh">–</small></button>
+    <button data-ev="fp">Foot plant<small id="evFp">–</small></button>
+    <button data-ev="br">Release<small id="evBr">–</small></button>
+    <button class="slow" id="slowBtn">▶ ¼ speed</button>
+  </div>
+  <div class="nudge hidden" id="nudge">
+    <div class="nl" id="nLabel">Adjust foot plant</div>
+    <div class="nb">
+      <button id="nPrev">◀ Frame</button>
+      <button id="nSet" class="set">Set to this frame</button>
+      <button id="nNext">Frame ▶</button>
+    </div>
+    <div class="nb" style="margin-top:6px">
+      <button id="nReset" class="ghostline">Reset to auto</button>
+    </div>
+  </div>
+</section>
+
+<section class="card hidden" id="report">
+  <div class="summary">
+    <div class="ring" id="ring"><div id="ringTxt">–</div></div>
+    <div>
+      <div style="font-weight:800;font-size:18px" id="repTitle">Pitch</div>
+      <div class="hint" id="repSub"></div>
+      <div class="meta" id="repMeta"></div>
+    </div>
+  </div>
+  <div id="qaBox"></div>
+  <div id="phases"></div>
+  <div class="actions">
+    <button class="btn small" id="copyBtn">Copy summary</button>
+    <button class="btn small ghost" id="another">Add another pitch</button>
+  </div>
+  <div class="hint" id="copyMsg" style="margin-top:6px"></div>
+</section>
+
+<section class="card hidden" id="session">
+  <h2>Session</h2>
+  <div class="hint" id="sessSub"></div>
+  <h3>Energy leaks</h3>
+  <div class="agg" id="agg"></div>
+  <h3>Pitch by pitch</h3>
+  <div class="scroll"><table><thead><tr><th>#</th><th>QA</th><th>Score</th><th>Stride</th><th>Drive</th><th>Trunk @ rel</th><th>Flags</th></tr></thead><tbody id="tbody"></tbody></table></div>
+</section>
+
+<section class="card">
+  <details>
+    <summary>Filming tips</summary>
+    <ul class="tips">
+      <li><b>Tripod, not handheld.</b> Set it at hip height, 10–15 ft away, square to the pitcher's path (camera looking at the pitcher's chest during leg lift).</li>
+      <li><b>Whole body in frame</b> from leg lift through the finish, with a little room on both sides. Landscape works best.</li>
+      <li><b>Use slo-mo (120 or 240 fps)</b> if you can. It makes foot plant and release much more precise. If the file you export plays slowed down, set "Clip speed" to match.</li>
+      <li><b>Good light, plain background.</b> Avoid other people walking through the frame.</li>
+      <li><b>One pitch per clip.</b> Trim to the delivery before or after upload.</li>
+    </ul>
+  </details>
+</section>
+
+<section class="card">
+  <details id="settings">
+    <summary>Pass / fail thresholds</summary>
+    <p class="hint" style="margin:10px 0 0">Coach-adjustable. Changes re-score every pitch in this session and are saved on this device.</p>
+    <div class="thr" id="thr"></div>
+    <div class="actions"><button class="btn small ghost" id="resetThr">Reset to defaults</button></div>
+  </details>
+</section>
+
+<section class="card">
+  <details>
+    <summary>What this version measures</summary>
+    <p class="hint">Single camera, 2D. Body points come from Google's MediaPipe pose model, running on your device. Video is not uploaded anywhere. Key frames (peak leg lift, foot plant, release) are found automatically; check them with the buttons under the video. Rotation metrics (kinematic sequence, hip-shoulder separation, flying open) need 3D and are not included yet. Treat numbers as trends for one athlete on a consistent camera setup, not lab-grade values.</p>
+  </details>
+</section>
+
+</main>
+
+<script type="module">
+const MP_VER = "0.10.14";
+const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
+const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
+
+const $ = s => document.querySelector(s);
+const video = $("#video"), canvas = $("#overlay"), ctx = canvas.getContext("2d");
+
+/* ---------- storage helpers ---------- */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------- thresholds ---------- */
+const DEFAULTS = { swayMax:4, balanceMax:15, strideMin:85, hangBackMax:20, elbowHikeMargin:3, flyoutMax:150, kneeCollapseMax:15, earlyReleaseMin:-20, trunkReleaseMin:25 };
+const THR_META = [
+  ["swayMax","Sway: max backward hip drift (% of height)"],
+  ["balanceMax","Balance: max trunk tilt at leg lift (°)"],
+  ["strideMin","Stride: minimum (% of height)"],
+  ["hangBackMax","Hanging back: max lean toward 2B at plant (°)"],
+  ["elbowHikeMargin","Elbow hike: elbow above shoulder by (% of height)"],
+  ["flyoutMax","Forearm flyout: max elbow angle at plant (°)"],
+  ["kneeCollapseMax","Knee collapse: max added bend after plant (°)"],
+  ["earlyReleaseMin","Early release: hand vs front foot, minimum (% of height)"],
+  ["trunkReleaseMin","Trunk tilt at release: minimum (°)"],
+];
+let TH = Object.assign({}, DEFAULTS, store.get("bb_thr", {}));
+function renderThr(){
+  $("#thr").innerHTML = THR_META.map(([k,l]) => `<div>${l}</div><input type="number" step="1" inputmode="decimal" data-k="${k}" value="${TH[k]}">`).join("");
+  $("#thr").querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+    const v = parseFloat(inp.value); if(isFinite(v)){ TH[inp.dataset.k] = v; store.set("bb_thr", TH); rerenderAll(); }
+  }));
+}
+$("#resetThr").onclick = () => { TH = Object.assign({}, DEFAULTS); store.set("bb_thr", TH); renderThr(); rerenderAll(); };
+renderThr();
+
+/* ---------- setup form ---------- */
+$("#inch").innerHTML = Array.from({length:12},(_,i)=>`<option ${i===0?"selected":""}>${i}</option>`).join("");
+const saved = store.get("bb_athlete", null);
+let throws = "R";
+if(saved){ $("#athlete").value = saved.name||""; $("#ft").value = saved.ft||6; $("#inch").value = saved.inch||0; throws = saved.throws||"R"; }
+function setThrows(v){ throws = v; document.querySelectorAll("#throws button").forEach(b=>b.classList.toggle("on", b.dataset.v===v)); }
+setThrows(throws);
+document.querySelectorAll("#throws button").forEach(b => b.onclick = () => setThrows(b.dataset.v));
+
+let currentFile = null, currentURL = null;
+$("#file").addEventListener("change", e => {
+  const f = e.target.files[0]; if(!f) return;
+  currentFile = f;
+  if(currentURL) { /* keep old URLs for session playback */ }
+  currentURL = URL.createObjectURL(f);
+  $("#fileName").textContent = f.name;
+  showErr(null);
+  viewing = null; live = null;
+  video.src = currentURL; video.load();
+  $("#viewer").classList.remove("hidden");
+  video.onloadedmetadata = () => {
+    const d = video.duration;
+    $("#tStart").value = 0;
+    $("#tEnd").value = (isFinite(d) ? Math.min(d, 6) : 4).toFixed(1);
+    $("#trimBox").classList.remove("hidden");
+    $("#go").disabled = false;
+    setStatus(isFinite(d) && d > 6 ? `Clip is ${d.toFixed(1)}s. Trim to the delivery for best results.` : "");
+  };
+});
+
+function setStatus(t){ $("#status").textContent = t || ""; }
+function showErr(t){ const e = $("#err"); if(!t){ e.classList.add("hidden"); return; } e.innerHTML = t; e.classList.remove("hidden"); }
+function setProg(p){ const el = $("#prog"); if(p==null){ el.classList.add("hidden"); return; } el.classList.remove("hidden"); el.firstElementChild.style.width = (p*100).toFixed(1)+"%"; }
+
+/* ---------- pose model ---------- */
+let landmarker = null, modelBuffer = null;
+async function getLandmarker(){
+  if(landmarker) return landmarker;
+  setStatus("Loading pose model (first time can take ~20s)…");
+  const vision = await import(`${MP_BASE}/vision_bundle.mjs`);
+  const fileset = await vision.FilesetResolver.forVisionTasks(`${MP_BASE}/wasm`);
+  const base = modelBuffer ? { modelAssetBuffer: modelBuffer } : { modelAssetPath: MODEL_URL };
+  let lastErr;
+  for(const delegate of ["GPU","CPU"]){
+    try{
+      landmarker = await vision.PoseLandmarker.createFromOptions(fileset, {
+        baseOptions: { ...base, delegate }, runningMode: "VIDEO", numPoses: 1,
+        minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5
+      });
+      return landmarker;
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr;
+}
+$("#modelFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; if(!f) return;
+  modelBuffer = new Uint8Array(await f.arrayBuffer());
+  landmarker = null;
+  $("#modelPick").classList.add("hidden"); showErr(null);
+  setStatus("Model file loaded. Tap Analyze again.");
+});
+
+/* ---------- frame extraction ---------- */
+let clock = 0, cancelFlag = false, analyzing = false, live = null, viewing = null;
+function seekTo(t){
+  return new Promise(res => {
+    let done = false;
+    const fin = () => { if(done) return; done = true; video.removeEventListener("seeked", fin); res(); };
+    video.addEventListener("seeked", fin);
+    video.currentTime = t;
+    setTimeout(fin, 2000);
+  });
+}
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+async function extract(t0, t1, rate){
+  const lm = await getLandmarker();
+  const W = video.videoWidth, H = video.videoHeight;
+  const n = Math.max(3, Math.floor((t1 - t0) * rate) + 1);
+  const frames = [];
+  live = { frames, t0, rate, W, H };
+  try{ await video.play(); }catch(e){}
+  video.pause();
+  for(let i = 0; i < n; i++){
+    if(cancelFlag) break;
+    const t = t0 + i / rate;
+    await seekTo(Math.min(t, video.duration - 0.001));
+    await nextFrame();
+    clock += Math.max(1, Math.round(1000 / rate));
+    let pts = null;
+    try{
+      const r = lm.detectForVideo(video, clock);
+      if(r && r.landmarks && r.landmarks[0]) pts = r.landmarks[0].map(p => ({ x:p.x*W, y:p.y*H, v:(p.visibility ?? 1) }));
+    }catch(e){ console.warn(e); }
+    frames.push({ t, pts });
+    setProg((i+1)/n);
+    setStatus(`Finding body points… frame ${i+1} of ${n}`);
+  }
+  return { frames, W, H, rate, t0 };
+}
+
+/* ---------- math helpers ---------- */
+const fin = Number.isFinite;
+function fillGaps(a, ok){
+  const n = a.length; let prev = -1;
+  for(let i=0;i<n;i++){
+    if(!ok[i]) continue;
+    if(prev === -1){ for(let j=0;j<i;j++) a[j] = a[i]; }
+    else if(i - prev > 1){ for(let j=prev+1;j<i;j++){ const t=(j-prev)/(i-prev); a[j] = a[prev] + (a[i]-a[prev])*t; } }
+    prev = i;
+  }
+  if(prev === -1) a.fill(NaN); else for(let j=prev+1;j<n;j++) a[j] = a[prev];
+}
+function smooth(a, w){
+  const n=a.length, h=w>>1, o=new Float64Array(n);
+  for(let i=0;i<n;i++){ let s=0,c=0; for(let j=i-h;j<=i+h;j++){ if(j>=0&&j<n&&fin(a[j])){ s+=a[j]; c++; } } o[i]=c?s/c:NaN; }
+  return o;
+}
+function vel(a, dt){
+  const n=a.length, o=new Float64Array(n);
+  for(let i=0;i<n;i++){ const lo=Math.max(0,i-1), hi=Math.min(n-1,i+1); o[i] = hi>lo ? (a[hi]-a[lo])/((hi-lo)*dt) : 0; }
+  return o;
+}
+function argmax(a, s, e){ let bi=-1, bv=-Infinity; for(let i=Math.max(0,s);i<Math.min(a.length,e);i++){ if(fin(a[i]) && a[i]>bv){ bv=a[i]; bi=i; } } return bi; }
+function argmin(a, s, e){ let bi=-1, bv=Infinity; for(let i=Math.max(0,s);i<Math.min(a.length,e);i++){ if(fin(a[i]) && a[i]<bv){ bv=a[i]; bi=i; } } return bi; }
+function median(arr){ const a = arr.filter(fin).sort((x,y)=>x-y); if(!a.length) return NaN; const m=a.length>>1; return a.length%2 ? a[m] : (a[m-1]+a[m])/2; }
+function ang(ax,ay,bx,by,cx,cy){
+  const v1x=ax-bx, v1y=ay-by, v2x=cx-bx, v2y=cy-by; const d=Math.hypot(v1x,v1y)*Math.hypot(v2x,v2y);
+  if(!d) return NaN; return Math.acos(Math.max(-1,Math.min(1,(v1x*v2x+v1y*v2y)/d)))*180/Math.PI;
+}
+const dist = (ax,ay,bx,by) => Math.hypot(ax-bx, ay-by);
+
+/* ---------- processing ---------- */
+const KEY_PTS = [0,11,12,13,14,15,16,23,24,25,26,27,28];
+function processFrames(raw){
+  const { frames } = raw; const N = frames.length, K = 33;
+  const X = [], Y = [], ok = [];
+  let visSum = 0, visCnt = 0, detected = 0;
+  for(let k=0;k<K;k++){ X.push(new Float64Array(N).fill(NaN)); Y.push(new Float64Array(N).fill(NaN)); ok.push(new Array(N).fill(false)); }
+  for(let i=0;i<N;i++){
+    const p = frames[i].pts; if(!p) continue; detected++;
+    for(let k=0;k<K;k++){
+      const q = p[k]; if(!q) continue;
+      if(KEY_PTS.includes(k)){ visSum += q.v; visCnt++; }
+      if(q.v >= 0.3){ X[k][i]=q.x; Y[k][i]=q.y; ok[k][i]=true; }
+    }
+  }
+  for(let k=0;k<K;k++){ fillGaps(X[k], ok[k]); fillGaps(Y[k], ok[k]); }
+  // fix left/right label swaps frame-to-frame (common in side views)
+  const fixSwaps = (L, R) => {
+    for(let i=1;i<N;i++){
+      let keep=0, swap=0;
+      for(let j=0;j<L.length;j++){
+        const l=L[j], r=R[j];
+        keep += dist(X[l][i],Y[l][i],X[l][i-1],Y[l][i-1]) + dist(X[r][i],Y[r][i],X[r][i-1],Y[r][i-1]);
+        swap += dist(X[l][i],Y[l][i],X[r][i-1],Y[r][i-1]) + dist(X[r][i],Y[r][i],X[l][i-1],Y[l][i-1]);
+      }
+      if(fin(swap) && fin(keep) && swap < keep*0.6){
+        for(let j=0;j<L.length;j++){ const l=L[j], r=R[j];
+          let t=X[l][i]; X[l][i]=X[r][i]; X[r][i]=t; t=Y[l][i]; Y[l][i]=Y[r][i]; Y[r][i]=t; }
+      }
+    }
+  };
+  fixSwaps([25,27,29,31],[26,28,30,32]);
+  fixSwaps([13,15,17,19,21],[14,16,18,20,22]);
+  const Xs = X.map(a=>smooth(a,5)), Ys = Y.map(a=>smooth(a,5));
+  return { X:Xs, Y:Ys, N, visMean: visCnt ? visSum/visCnt : 0, detectRate: N ? detected/N : 0 };
+}
+
+function analyze(raw, heightM, slow){
+  const S = processFrames(raw);
+  const { X, Y, N } = S;
+  const dt = 1 / raw.rate / slow; // real seconds per sample
+  const hipCx = i => (X[23][i]+X[24][i])/2, hipCy = i => (Y[23][i]+Y[24][i])/2;
+  const q = Math.max(1, Math.round(N*0.1));
+  const avg = (fn,a,b) => { let s=0,c=0; for(let i=a;i<b;i++){ const v=fn(i); if(fin(v)){ s+=v; c++; } } return c ? s/c : NaN; };
+  const startX = avg(hipCx, 0, q), endX = avg(hipCx, N-q, N);
+  const dir = Math.sign(endX - startX) || 1;
+  const fw = x => (x - startX) * dir;
+  const fwArr = k => Float64Array.from(X[k], fw);
+
+  // body height in pixels (heel to nose ≈ 90% of standing height)
+  const hs = []; const hN = Math.max(3, Math.round(N*0.2));
+  for(let i=0;i<hN;i++) hs.push((Math.max(Y[29][i], Y[30][i]) - Y[0][i]) / 0.90);
+  const Hpx = median(hs);
+
+  // stride leg = knee that lifts highest in first 70% of clip
+  const lim = Math.max(3, Math.round(N*0.7));
+  let minL = Infinity, minR = Infinity;
+  for(let i=0;i<lim;i++){ minL = Math.min(minL, Y[25][i]-hipCy(i)); minR = Math.min(minR, Y[26][i]-hipCy(i)); }
+  const frontLeft = minL < minR;
+  const F = frontLeft ? {hip:23,knee:25,ankle:27,heel:29,foot:31} : {hip:24,knee:26,ankle:28,heel:30,foot:32};
+  const B = frontLeft ? {hip:24,knee:26,ankle:28,heel:30,foot:32} : {hip:23,knee:25,ankle:27,heel:29,foot:31};
+
+  // throwing arm = wrist with fastest forward speed
+  const vL = vel(fwArr(15), dt), vR = vel(fwArr(16), dt);
+  const armLeft = Math.max(...vL.filter(fin)) > Math.max(...vR.filter(fin));
+  const A = armLeft ? {sh:11,el:13,wr:15} : {sh:12,el:14,wr:16};
+
+  // ---- foot plant: front foot reaches (nearly) its landing spot AND touches the ground
+  const fa = fwArr(F.ankle), va = vel(fa, dt);
+  const iV = argmax(va, 0, N);
+  const footY = i => Math.max(Y[F.heel][i], Y[F.foot][i], Y[F.ankle][i]);
+  let fp = -1;
+  if(iV >= 0 && fin(Hpx)){
+    const winEnd = Math.min(N, iV + Math.round(0.6/dt) + 1);
+    let maxFa = -Infinity, groundY = -Infinity;
+    for(let i=iV;i<winEnd;i++){ if(fin(fa[i])) maxFa = Math.max(maxFa, fa[i]); const fy = footY(i); if(fin(fy)) groundY = Math.max(groundY, fy); }
+    for(let i=iV;i<winEnd;i++){
+      if(fa[i] >= maxFa - 0.02*Hpx && footY(i) >= groundY - 0.02*Hpx){ fp = i; break; }
+    }
+  }
+  if(fp < 0 && iV >= 0){ for(let i=iV+1;i<N-1;i++){ if(va[i] < 0.15*va[iV] && va[i+1] < 0.25*va[iV]){ fp = i; break; } } }
+  if(fp < 0) fp = Math.min(N-1, Math.max(0,iV) + Math.round(0.08/dt));
+
+  // ---- peak leg lift: front knee highest relative to hips, before the stride
+  const kneeRel = Float64Array.from({length:N}, (_,i) => Y[F.knee][i] - hipCy(i));
+  let pkh = argmin(kneeRel, 0, Math.max(1, Math.min(fp, iV+1))); if(pkh < 0) pkh = 0;
+
+  // ---- release: throwing hand gets clearly out in front of the head (robust to arm blur)
+  const wrF = fwArr(A.wr), noseF = fwArr(0), vw = vel(wrF, dt);
+  const brEnd = Math.min(N, fp + Math.round(0.35/dt) + 1);
+  let br = -1;
+  if(fin(Hpx)) for(let i=fp+1;i<brEnd;i++){ if(wrF[i] - noseF[i] >= 0.08*Hpx){ br = i; break; } }
+  if(br < 0) br = argmax(vw, fp, brEnd);
+  if(br < 0) br = Math.min(N-1, fp+1);
+
+  // static capture checks
+  const staticReasons = [];
+  const travel = fw(endX) / Hpx * 100;
+  if(S.detectRate < 0.6) staticReasons.push("The athlete wasn't found in many frames.");
+  if(!fin(Hpx) || Hpx <= 0) staticReasons.push("Couldn't measure the athlete's height in the first frames. Start the clip before the first move, with the whole body in view.");
+  else if(Hpx < 0.25 * raw.H) staticReasons.push("The athlete is small in the frame. Move closer or zoom so the body fills at least a third of the frame height.");
+  if(S.visMean < 0.5) staticReasons.push("Body points were hard to see (blur, low light, or parts of the body out of frame).");
+  if(!(travel > 15)) staticReasons.push("Little forward movement detected. Is the whole delivery in the clip, filmed from the side?");
+  if(armLeft === frontLeft) staticReasons.push("Throwing arm and stride leg were detected on the same side; left/right tracking may be confused.");
+
+  const R = {
+    S, dir, F, B, A, Hpx,
+    ev: { pkh, fp, br }, auto: { pkh, fp, br }, edited: {},
+    rate: raw.rate, t0: raw.t0, slow, W: raw.W, H: raw.H,
+    ctx: { dt, startX, heightM, staticReasons },
+  };
+  computeMetrics(R);
+  return R;
+}
+
+function computeMetrics(R){
+  const { X, Y, N } = R.S, { dt, startX, heightM, staticReasons } = R.ctx;
+  const { F, B, A, Hpx, dir } = R; const { pkh, fp, br } = R.ev;
+  const fw = x => (x - startX) * dir, pct = px => px / Hpx * 100;
+  const hipCx = i => (X[23][i]+X[24][i])/2, hipCy = i => (Y[23][i]+Y[24][i])/2;
+  const shCx = i => (X[11][i]+X[12][i])/2,  shCy = i => (Y[11][i]+Y[12][i])/2;
+  const lean = i => Math.atan2((shCx(i)-hipCx(i))*dir, hipCy(i)-shCy(i)) * 180/Math.PI;
+  const knee = i => ang(X[F.hip][i],Y[F.hip][i],X[F.knee][i],Y[F.knee][i],X[F.ankle][i],Y[F.ankle][i]);
+
+  const reasons = staticReasons.slice();
+  const s1 = (fp-pkh)*dt, s2 = (br-fp)*dt;
+  if(!(pkh < fp && fp < br)) reasons.push("Couldn't find leg lift → foot plant → release in order.");
+  else {
+    if(s1 < 0.15 || s1 > 1.8) reasons.push(`Leg lift to foot plant came out at ${s1.toFixed(2)}s, which looks off. Check "Clip speed" and the key frames.`);
+    if(s2 < 0.04 || s2 > 0.4) reasons.push(`Foot plant to release came out at ${s2.toFixed(2)}s, which looks off. Check the key frames.`);
+  }
+
+  let minHip = Infinity; for(let i=0;i<=pkh;i++) minHip = Math.min(minHip, fw(hipCx(i)));
+  const vh = vel(Float64Array.from({length:N}, (_,i)=>fw(hipCx(i))), dt);
+  let driveMax = -Infinity; for(let i=pkh;i<=fp;i++) if(fin(vh[i])) driveMax = Math.max(driveMax, vh[i]);
+  let kneeMin = Infinity; for(let i=fp;i<=br;i++) kneeMin = Math.min(kneeMin, knee(i));
+  const kneeFP = knee(fp), kneeBR = knee(br);
+
+  R.m = {
+    sway: Math.max(0, -pct(minHip)),
+    balance: lean(pkh),
+    driveMph: driveMax/Hpx*heightM*2.23694,
+    stride: pct(Math.abs(fw(X[F.ankle][fp]) - fw(X[B.ankle][fp]))),
+    leanFP: lean(fp),
+    lateRise: pct(Y[A.wr][fp] - Y[A.el][fp]),
+    elbowHike: pct(Y[A.sh][fp] - Y[A.el][fp]),
+    elbowFP: ang(X[A.sh][fp],Y[A.sh][fp],X[A.el][fp],Y[A.el][fp],X[A.wr][fp],Y[A.wr][fp]),
+    kneeFP, kneeBR, kneeCollapse: Math.max(0, kneeFP - kneeMin),
+    releaseExt: pct(fw(X[A.wr][br]) - fw(X[F.ankle][br])),
+    leanBR: lean(br),
+    s1, s2,
+  };
+  R.qa = { pass: reasons.length === 0, reasons };
+}
+
+/* ---------- checks ---------- */
+const f1 = v => fin(v) ? v.toFixed(1) : "–";
+const f0 = v => fin(v) ? Math.round(v).toString() : "–";
+const CHECKS = [
+  { key:"sway", phase:"Wind-up & leg lift", label:"Sway",
+    what:"How far the hips drift back toward 2nd base before moving forward.",
+    flag:(m,T)=>m.sway > T.swayMax, fmt:m=>`${f1(m.sway)}% ht`,
+    good:"Hips stayed centered over the rubber during leg lift.",
+    bad:"Hips drifted back toward 2nd base. Cue: gather tall over the back foot, then go forward." },
+  { key:"balance", phase:"Wind-up & leg lift", label:"Balance at leg lift",
+    what:"Trunk tilt from vertical at peak leg lift.",
+    flag:(m,T)=>Math.abs(m.balance) > T.balanceMax, fmt:m=>`${f0(Math.abs(m.balance))}° ${m.balance>=0?"to plate":"to 2B"}`,
+    good:"Stacked and balanced at the top.",
+    bad:"Trunk tilted at the top of leg lift. Cue: head over the back hip, posture tall." },
+  { key:"drive", phase:"Drive", label:"Drive speed", info:true,
+    what:"Peak forward speed of the hips moving down the mound.",
+    fmt:m=>`${f1(m.driveMph)} mph` },
+  { key:"s1", phase:"Drive", label:"Leg lift → foot plant", info:true,
+    what:"Time from peak leg lift to front foot plant.",
+    fmt:m=>`${fin(m.s1)?m.s1.toFixed(2):"–"} s` },
+  { key:"stride", phase:"Foot plant", label:"Stride length",
+    what:"Back ankle to front ankle at foot plant, as % of height.",
+    flag:(m,T)=>m.stride < T.strideMin, fmt:m=>`${f0(m.stride)}%`,
+    good:"Good stride length for the body.",
+    bad:"Short stride. Cue: drive the hips down the mound longer before the foot lands." },
+  { key:"hangBack", phase:"Foot plant", label:"Hanging back",
+    what:"Trunk lean at foot plant (+ toward plate, − toward 2B).",
+    flag:(m,T)=>m.leanFP < -T.hangBackMax, fmt:m=>`${m.leanFP>=0?"+":""}${f0(m.leanFP)}°`,
+    good:"Torso stayed stacked over the pelvis into foot plant.",
+    bad:"Leaning back toward 2B at foot plant. Cue: keep the chest stacked over the hips as you stride." },
+  { key:"lateRise", phase:"Foot plant", label:"Late rise",
+    what:"Throwing hand vs elbow height at foot plant.",
+    flag:(m)=>m.lateRise > 0, fmt:m=>m.lateRise>0?`Hand ${f0(m.lateRise)}% below elbow`:`Hand ${f0(-m.lateRise)}% above elbow`,
+    good:"Hand was above the elbow at foot plant, on time.",
+    bad:"Hand still below the elbow at foot plant, so the arm is late. Cue: get the ball up as the front foot lands." },
+  { key:"elbowHike", phase:"Foot plant", label:"Elbow hike",
+    what:"Throwing elbow height vs throwing shoulder at foot plant.",
+    flag:(m,T)=>m.elbowHike > T.elbowHikeMargin, fmt:m=>m.elbowHike>0?`${f0(m.elbowHike)}% above shoulder`:`${f0(-m.elbowHike)}% below shoulder`,
+    good:"Elbow at or just below shoulder height.",
+    bad:"Elbow rose above the shoulder line. Cue: elbow at shoulder height, rotate through the target." },
+  { key:"flyout", phase:"Foot plant", label:"Forearm flyout",
+    what:"Elbow angle at foot plant (180° = straight arm).",
+    flag:(m,T)=>m.elbowFP > T.flyoutMax, fmt:m=>`${f0(m.elbowFP)}°`,
+    good:"Elbow stayed bent through foot plant.",
+    bad:"Arm too straight at foot plant. Cue: keep the elbow bent; let the arm lay back, not reach." },
+  { key:"knee", phase:"Foot plant", label:"Knee collapse",
+    what:"Extra front-knee bend after the foot lands.",
+    flag:(m,T)=>m.kneeCollapse > T.kneeCollapseMax, fmt:m=>`+${f0(m.kneeCollapse)}°`,
+    good:"Front side braced firm after landing.",
+    bad:"Front knee kept bending after plant, leaking energy. Cue: land and brace; push the front leg into the ground." },
+  { key:"earlyRelease", phase:"Release", label:"Early release",
+    what:"Hand position at release vs front foot (% of height, + = ahead).",
+    flag:(m,T)=>m.releaseExt < T.earlyReleaseMin, fmt:m=>`${m.releaseExt>=0?"+":""}${f0(m.releaseExt)}%`,
+    good:"Released out front near the front foot.",
+    bad:"Released well behind the front foot. Cue: finish out front; let the chest carry the arm forward." },
+  { key:"trunkRelease", phase:"Release", label:"Trunk tilt at release",
+    what:"Forward trunk flexion at ball release.",
+    flag:(m,T)=>m.leanBR < T.trunkReleaseMin, fmt:m=>`${f0(m.leanBR)}°`,
+    good:"Chest got out over the front leg.",
+    bad:"Upright at release. Cue: get the chest over the front knee through release." },
+  { key:"s2", phase:"Release", label:"Foot plant → release", info:true,
+    what:"Time from foot plant to ball release.",
+    fmt:m=>`${fin(m.s2)?m.s2.toFixed(3):"–"} s` },
+];
+const PHASES = ["Wind-up & leg lift","Drive","Foot plant","Release"];
+function score(m){
+  const scored = CHECKS.filter(c=>!c.info);
+  const flags = scored.filter(c=>c.flag(m,TH));
+  return { flags, pct: Math.round((scored.length - flags.length)/scored.length*100) };
+}
+
+/* ---------- session ---------- */
+const session = [];
+let selected = -1;
+
+$("#go").onclick = async () => {
+  if(!currentFile || analyzing) return;
+  const t0 = Math.max(0, parseFloat($("#tStart").value)||0);
+  let t1 = parseFloat($("#tEnd").value); if(!fin(t1) || t1 <= t0) t1 = video.duration;
+  t1 = Math.min(t1, video.duration);
+  const slow = parseFloat($("#slow").value) || 1;
+  const rate = slow > 1 ? 30 : 60;
+  if((t1 - t0) > 15){ showErr("That's a long range. Trim to 15 seconds or less (one pitch)."); return; }
+  const ft = parseInt($("#ft").value), inch = parseInt($("#inch").value);
+  const heightM = (ft*12 + inch) * 0.0254;
+  const name = $("#athlete").value.trim();
+  store.set("bb_athlete", { name, ft, inch, throws });
+  analyzing = true; cancelFlag = false; viewing = null; showErr(null);
+  $("#go").disabled = true; $("#cancel").classList.remove("hidden");
+  setProg(0);
+  try{
+    const raw = await extract(t0, t1, rate);
+    if(cancelFlag){ setStatus("Canceled."); return; }
+    setStatus("Measuring…");
+    const R = analyze(raw, heightM, slow);
+    R.name = name || "Athlete"; R.throws = throws; R.url = currentURL; R.fileName = currentFile.name;
+    R.heightTxt = `${ft}'${inch}"`; R.when = new Date();
+    session.push(R); selected = session.length - 1;
+    setActiveEv(null);
+    viewing = R;
+    setStatus("");
+    renderReport(R); renderSession();
+    await seekTo(R.t0 + R.ev.fp / R.rate);
+    $("#report").scrollIntoView({ behavior:"smooth", block:"start" });
+  }catch(e){
+    console.error(e);
+    const msg = (e && e.message) ? e.message : String(e);
+    showErr(`<b>Couldn't run the pose model.</b><br>${escapeHtml(msg)}<br><br>If this says something about loading or fetching, the browser blocked the model download. You can load the model file manually below (download <span style="word-break:break-all">${MODEL_URL}</span> to your device first).`);
+    $("#modelPick").classList.remove("hidden");
+    setStatus("");
+  }finally{
+    analyzing = false; live = null; setProg(null);
+    $("#go").disabled = false; $("#cancel").classList.add("hidden");
+  }
+};
+$("#cancel").onclick = () => { cancelFlag = true; };
+$("#another").onclick = () => {
+  $("#file").value = ""; currentFile = null; $("#fileName").textContent = "Choose bullpen video";
+  $("#go").disabled = true; $("#trimBox").classList.add("hidden");
+  $("#setup").scrollIntoView({ behavior:"smooth" });
+};
+
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------- rendering ---------- */
+function renderReport(R){
+  $("#report").classList.remove("hidden");
+  const m = R.m, sc = score(m);
+  $("#ring").style.setProperty("--p", sc.pct);
+  $("#ringTxt").textContent = sc.pct + "%";
+  const idx = session.indexOf(R) + 1;
+  $("#repTitle").textContent = `${R.name} · Pitch ${idx}`;
+  $("#repSub").textContent = `${sc.flags.length ? sc.flags.length + " energy leak" + (sc.flags.length>1?"s":"") + " flagged" : "No energy leaks flagged"} · ${R.throws}HP · ${R.heightTxt}`;
+  $("#repMeta").innerHTML = R.qa.pass ? `<span class="badge pass">✓ Capture QA passed</span>` : `<span class="badge warn">⚠ Check capture</span>`;
+  $("#qaBox").innerHTML = R.qa.pass ? "" : `<div class="err" style="background:#fff7e8;color:#7a4500">${R.qa.reasons.map(escapeHtml).join("<br>")}</div>`;
+  let html = "";
+  for(const ph of PHASES){
+    const cs = CHECKS.filter(c=>c.phase===ph);
+    html += `<h3>${ph}</h3><div class="grid">`;
+    for(const c of cs){
+      const flagged = !c.info && c.flag(m, TH);
+      const badge = c.info ? `<span class="badge info">INFO</span>` : flagged ? `<span class="badge flag">FLAG</span>` : `<span class="badge pass">PASS</span>`;
+      html += `<div class="check ${flagged?"flagged":""}"><div class="top"><span class="name">${c.label}</span>${badge}</div>
+        <div class="val">${c.fmt(m)}</div><div class="what">${c.what}</div>
+        ${c.info ? "" : `<div class="cue">${flagged ? c.bad : c.good}</div>`}</div>`;
+    }
+    html += `</div>`;
+  }
+  $("#phases").innerHTML = html;
+  const t = e => (R.t0 + R.ev[e] / R.rate).toFixed(2) + "s" + (R.edited && R.edited[e] ? " ✎" : "");
+  $("#evPkh").textContent = t("pkh");
+  $("#evFp").textContent = t("fp");
+  $("#evBr").textContent = t("br");
+}
+
+function renderSession(){
+  if(!session.length) return;
+  $("#session").classList.remove("hidden");
+  const good = session.filter(r=>r.qa.pass);
+  const pool = good.length ? good : session;
+  $("#sessSub").textContent = `${session.length} pitch${session.length>1?"es":""} analyzed${good.length!==session.length ? ` · counts use the ${pool.length} that passed QA` : ""}`;
+  const avgScore = Math.round(pool.reduce((s,r)=>s+score(r.m).pct,0)/pool.length);
+  let agg = `<div class="a"><div class="hint">Session score</div><div class="n">${avgScore}%</div></div>`;
+  for(const c of CHECKS.filter(c=>!c.info)){
+    const n = pool.filter(r=>c.flag(r.m,TH)).length;
+    agg += `<div class="a ${n?"bad":""}"><div class="hint">${c.label}</div><div class="n">${n} <small>of ${pool.length}</small></div></div>`;
+  }
+  const avg = k => pool.reduce((s,r)=>s+(fin(r.m[k])?r.m[k]:0),0)/pool.length;
+  agg += `<div class="a"><div class="hint">Avg stride</div><div class="n">${f0(avg("stride"))}%</div></div>`;
+  agg += `<div class="a"><div class="hint">Avg drive</div><div class="n">${f1(avg("driveMph"))} <small>mph</small></div></div>`;
+  $("#agg").innerHTML = agg;
+  $("#tbody").innerHTML = session.map((r,i)=>{
+    const sc = score(r.m);
+    return `<tr data-i="${i}" class="${i===selected?"sel":""}"><td>${i+1}</td><td>${r.qa.pass?"✅":"⚠️"}</td><td>${sc.pct}%</td><td>${f0(r.m.stride)}%</td><td>${f1(r.m.driveMph)}</td><td>${f0(r.m.leanBR)}°</td><td>${sc.flags.map(c=>c.label).join(", ")||"–"}</td></tr>`;
+  }).join("");
+  $("#tbody").querySelectorAll("tr").forEach(tr => tr.onclick = async () => {
+    const r = session[+tr.dataset.i]; selected = +tr.dataset.i; viewing = r; setActiveEv(null);
+    if(video.src !== r.url){ video.src = r.url; video.load(); await new Promise(res=>{ video.onloadeddata = res; setTimeout(res, 3000); }); }
+    renderReport(r); renderSession();
+    await seekTo(r.t0 + r.ev.fp / r.rate);
+    $("#viewer").scrollIntoView({ behavior:"smooth" });
+  });
+}
+function rerenderAll(){ if(viewing) renderReport(viewing); renderSession(); }
+
+/* ---------- event buttons ---------- */
+const EV_NAMES = { pkh:"peak leg lift", fp:"foot plant", br:"release" };
+let activeEv = null;
+const evTime = (R, i) => R.t0 + i / R.rate;
+const curIdx = R => Math.max(0, Math.min(R.S.N-1, Math.round((video.currentTime - R.t0) * R.rate)));
+function setActiveEv(e){
+  activeEv = e;
+  document.querySelectorAll("#evbar button[data-ev]").forEach(b => b.classList.toggle("on", b.dataset.ev === e));
+  $("#nudge").classList.toggle("hidden", !e);
+  if(e) $("#nLabel").textContent = `Adjust ${EV_NAMES[e]}: step to the right frame, then tap Set`;
+}
+document.querySelectorAll("#evbar button[data-ev]").forEach(b => b.onclick = () => {
+  if(!viewing) return; video.pause(); $("#slowBtn").textContent = "▶ ¼ speed";
+  setActiveEv(b.dataset.ev);
+  seekTo(evTime(viewing, viewing.ev[b.dataset.ev]));
+});
+function stepFrame(d){
+  if(!viewing) return; video.pause();
+  const i = Math.max(0, Math.min(viewing.S.N-1, curIdx(viewing) + d));
+  seekTo(evTime(viewing, i));
+}
+$("#nPrev").onclick = () => stepFrame(-1);
+$("#nNext").onclick = () => stepFrame(1);
+function applyEvent(e, i){
+  const R = viewing; if(!R) return;
+  const ev = { ...R.ev, [e]: i };
+  if(!(ev.pkh < ev.fp && ev.fp < ev.br)){
+    $("#nLabel").textContent = "Order must be leg lift → foot plant → release. Pick a frame between the other two.";
+    return;
+  }
+  R.ev = ev; R.edited[e] = i !== R.auto[e];
+  computeMetrics(R); renderReport(R); renderSession();
+  $("#nLabel").textContent = R.edited[e] ? `${EV_NAMES[e][0].toUpperCase()+EV_NAMES[e].slice(1)} set by you. Report updated.` : "Back to auto. Report updated.";
+}
+$("#nSet").onclick = () => { if(viewing && activeEv) applyEvent(activeEv, curIdx(viewing)); };
+$("#nReset").onclick = () => { if(viewing && activeEv){ applyEvent(activeEv, viewing.auto[activeEv]); seekTo(evTime(viewing, viewing.ev[activeEv])); } };
+$("#slowBtn").onclick = async () => {
+  if(analyzing) return;
+  if(!video.paused){ video.pause(); $("#slowBtn").textContent = "▶ ¼ speed"; return; }
+  video.playbackRate = 0.25;
+  if(viewing){ const end = viewing.t0 + (viewing.S.N-1)/viewing.rate; if(video.currentTime >= end - 0.05) video.currentTime = viewing.t0; }
+  try{ await video.play(); $("#slowBtn").textContent = "❚❚ Pause"; }catch(e){}
+};
+video.addEventListener("pause", () => $("#slowBtn").textContent = "▶ ¼ speed");
+
+/* ---------- overlay ---------- */
+const EDGES = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[27,29],[29,31],[27,31],[24,26],[26,28],[28,30],[30,32],[28,32]];
+const JOINTS = [0,11,12,13,14,15,16,23,24,25,26,27,28];
+function drawSkeleton(get, lw, colorFor){
+  for(const [a,b] of EDGES){
+    const p = get(a), q = get(b); if(!p || !q) continue;
+    ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = lw*1.9;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+    ctx.strokeStyle = colorFor(a,b); ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+  }
+  for(const k of JOINTS){ const p = get(k); if(!p) continue; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x,p.y,lw*0.9,0,Math.PI*2); ctx.fill(); }
+}
+function tag(text, lw){
+  ctx.font = `800 ${Math.round(lw*5)}px Inter, sans-serif`;
+  const w = ctx.measureText(text).width, pad = lw*2.2, h = lw*8;
+  ctx.fillStyle = "#ff9f0a"; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lw*4, lw*4, w+pad*2, h, lw*2) : ctx.rect(lw*4, lw*4, w+pad*2, h); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.fillText(text, lw*4+pad, lw*4+h/2);
+}
+function loop(){
+  const W = video.videoWidth, H = video.videoHeight;
+  if(W && H){
+    if(canvas.width !== W || canvas.height !== H){ canvas.width = W; canvas.height = H; }
+    ctx.clearRect(0,0,W,H);
+    const lw = Math.max(2, H/170);
+    if(analyzing && live && live.frames.length){
+      const pts = live.frames[live.frames.length-1].pts;
+      if(pts) drawSkeleton(k => pts[k] && pts[k].v > 0.3 ? pts[k] : null, lw, () => "#ff9f0a");
+    } else if(viewing){
+      const R = viewing; const i = Math.round((video.currentTime - R.t0) * R.rate);
+      if(i >= 0 && i < R.S.N){
+        const {X,Y} = R.S;
+        const frontSet = new Set(Object.values(R.F)), armSet = new Set([R.A.sh,R.A.el,R.A.wr]);
+        drawSkeleton(k => fin(X[k][i]) ? {x:X[k][i], y:Y[k][i]} : null, lw, (a,b) =>
+          (armSet.has(a) && armSet.has(b)) ? "#4f8cff" : (frontSet.has(a) && frontSet.has(b)) ? "#ff9f0a" : "rgba(255,255,255,.92)");
+        const near = (e) => Math.abs(i - R.ev[e]) <= Math.max(1, Math.round(R.rate/30));
+        if(near("pkh")) tag("PEAK LEG LIFT", lw);
+        else if(near("fp")){
+          tag(`FOOT PLANT · STRIDE ${f0(R.m.stride)}%`, lw);
+          ctx.strokeStyle = "#ff9f0a"; ctx.setLineDash([lw*2, lw*2]); ctx.lineWidth = lw*0.8;
+          const fy = Math.max(Y[R.F.ankle][i], Y[R.B.ankle][i]) + lw*3;
+          ctx.beginPath(); ctx.moveTo(X[R.B.ankle][i], fy); ctx.lineTo(X[R.F.ankle][i], fy); ctx.stroke(); ctx.setLineDash([]);
+        }
+        else if(near("br")) tag("RELEASE", lw);
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ---------- copy summary ---------- */
+$("#copyBtn").onclick = async () => {
+  const R = viewing; if(!R) return;
+  const sc = score(R.m);
+  const lines = [`${R.name}, pitch ${session.indexOf(R)+1}: ${sc.pct}% of checks passed`];
+  if(!R.qa.pass) lines.push("(capture quality warning)");
+  for(const c of CHECKS){
+    const st = c.info ? "" : c.flag(R.m,TH) ? " ❌" : " ✅";
+    lines.push(`${c.label}: ${c.fmt(R.m)}${st}`);
+  }
+  if(sc.flags.length){ lines.push(""); lines.push("Focus:"); sc.flags.forEach(c=>lines.push(`• ${c.bad}`)); }
+  const text = lines.join("\n");
+  try{ await navigator.clipboard.writeText(text); $("#copyMsg").textContent = "Copied. Paste it into your athlete chat."; }
+  catch(e){ $("#copyMsg").innerHTML = `<textarea style="width:100%;height:160px;margin-top:8px;font:inherit;font-size:13px;border-radius:10px;border:1.5px solid var(--line);padding:8px">${escapeHtml(text)}</textarea>`; }
+};
+</script>
+</body>
+</html>
